@@ -14,9 +14,6 @@ import (
  */
 
 type Email interface {
-	// Send 发送邮件
-	// Body 需要发送的消息体，...string 则是发送的地址信息
-	Send(*Body, ...string) error
 }
 
 // File 邮件附件信息
@@ -124,7 +121,7 @@ func (c *client) build() {
 		html := &Message{
 			header: []*Header{
 				NewHeader(ContentType, "text/html", "charset=utf-8"),
-				NewHeader(ContentTransferEncoding, "quoted-printable"+CRLF),
+				NewHeader(ContentTransferEncoding, "quoted-printable"+CRLF), //格式需要 CRLF
 			},
 			body: c.html,
 		}
@@ -170,7 +167,7 @@ func parseMessage(message *Message) []byte {
 
 	//解析邮件边界分割
 	if message.boundaryStart != "" && message.body != "" { //如果当前 message 没有任何消息正文，则不添加分割符
-		buf.WriteString(CRLF + message.boundaryStart + CRLF)
+		buf.WriteString(CRLF + message.boundaryStart + CRLF) //格式需要 CRLF
 	}
 	//解析邮件头 检验本身是否属于一个多部份混合消息,如果是多部份混合消息 则自己本身也要使用自己的消息分割符
 	if message.header != nil {
@@ -208,14 +205,6 @@ func parseMessage(message *Message) []byte {
 		buf.WriteString(CRLF + message.boundaryEed + CRLF)
 	}
 	return buf.Bytes()
-}
-
-func (c *client) Send(body *Body, addr ...string) error {
-	err := smtp.SendMail(c.host+":25", c.auth, c.from, addr, body.Message())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // NewEmail 生成一个Email客户端
